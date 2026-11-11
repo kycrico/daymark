@@ -9,6 +9,7 @@ The first 21 days are a milestone, not a guarantee that a habit is automatic. Ke
 
 ## Features
 - Daily checklist and tiny-minimum actions with routine anchors
+- Touch drag-and-drop reordering within daily habits, life dreams, and main/side quests (⠿ handles; keyboard arrow support)
 - Main/side quests linked to life dreams
 - XP and coin economy, rewards conditional on daily progress
 - Per-habit monthly calendars and retroactive check-ins
