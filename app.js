@@ -118,14 +118,14 @@ function renderCalendar(){
  }
 }
 function progressForQuest(q){const hs=db.habits.filter(h=>h.questId===q.id);return {n:hs.length,checks:sum(hs,h=>completions(h))};}
-function dreamCard(d){const quests=db.quests.filter(q=>q.dreamId===d.id),doneQ=quests.filter(q=>q.finished).length;
+function dreamCard(d){const quests=db.quests.filter(q=>q.dreamId===d.id),doneQ=quests.filter(q=>q.finished).length,questIds=new Set(quests.map(q=>q.id)),dreamActions=sum(db.habits.filter(h=>questIds.has(h.questId)),h=>completions(h));
  const card=e("article","dream-card"),top=e("div","dream-top"),body=e("div");
  add(body,e("span","eyebrow","✧ LIFE DREAM"),e("h3","",d.name));
  if(d.why)add(body,e("p","",d.why));
  add(top,body,button("⋯","small-icon",()=>openDream(d)));
  const foot=e("div","dream-progress");
  const bar=e("div","habit-track"),inner=e("div");inner.style.width=(quests.length?Math.round(doneQ/quests.length*100):0)+"%";
- add(bar,inner);add(foot,e("span","",doneQ+"/"+quests.length+" 任務"),bar);
+ add(bar,inner);add(foot,e("span","",doneQ+"/"+quests.length+" 任務 · "+dreamActions+" 次行動"),bar);
  add(card,top,foot);return card;
 }
 function questCard(q,compact=false){
