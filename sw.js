@@ -1,4 +1,4 @@
-const CACHE='daymark-the-path-v3-20261111';
+const CACHE='daymark-the-path-v4-touch-sort-20261111';
 const CORE=['./','./index.html','./app.js','./style.css','./manifest.webmanifest','./icon.svg'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)));self.skipWaiting();});
 self.addEventListener('activate',event=>{event.waitUntil(Promise.all([self.clients.claim(),caches.keys().then(keys=>Promise.all(keys.filter(key=>key.startsWith('daymark-')&&key!==CACHE).map(key=>caches.delete(key))))]));});
