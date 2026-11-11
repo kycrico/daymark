@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#151d1b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Daymark">
+<meta name="description" content="以每日微習慣，完成你的人生主線。離線人生 RPG 習慣追蹤。">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="./icon.svg">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+<link rel="stylesheet" href="./style.css">
+<title>Daymark · The Path</title>
+</head>
+<body>
+<div class="shell">
+<header class="topbar">
+ <div class="brand"><div class="sigil" aria-hidden="true">✦</div><div><b>DAYMARK</b><small>THE PATH · 你的冒險日誌</small></div></div>
+ <button class="headbutton" id="settingsShortcut" type="button" aria-label="設定">⚙</button>
+</header>
+<div id="storageWarning" class="warning" hidden>⚠ 無法自動保存資料。請使用 Safari 開啟正式網站，並定期匯出備份。</div>
+<main>
+<section id="today" class="page active" aria-label="今日">
+ <div class="intro"><span class="eyebrow">CHAPTER <span id="chapterNum">I</span> · TODAY</span><h1>每一小步，<br><i>都會改寫故事。</i></h1><p id="dateLine" class="muted"></p></div>
+ <div class="hero-card">
+  <div class="hero-glow"></div>
+  <div class="hero-top"><div><span class="eyebrow">冒險者狀態</span><div class="level-line">LV <strong id="levelDisplay">1</strong> <span>· 穩定前進</span></div></div><span class="crest">⚔</span></div>
+  <div class="xpbar" role="progressbar" aria-label="等級進度"><div id="xpFill"></div></div>
+  <div class="score-row"><span id="xpText">0 / 100 XP</span><span id="wallet">🪙 0</span></div>
+  <div class="hero-bottom"><div><b id="doneCount">0 / 0</b><small>今日完成</small></div><div><b id="streakDisplay">0 天</b><small>連續冒險</small></div><div><b id="graduateCount">0</b><small>畢業習慣</small></div></div>
+ </div>
+ <div class="section-heading"><div><span class="eyebrow">DAILY QUESTS</span><h2>今日微習慣</h2></div><button class="icon-add" id="addHabit" type="button">＋ 新習慣</button></div>
+ <p class="section-sub">唔需要完美。先做得少，先可以做得耐。</p>
+ <div id="todayHabits" class="cards"></div>
+ <div class="tip"><span>✧</span><div><b>1% 微進步法</b><p id="dailyTip">用一個細到冇藉口拒絕嘅行動開始。</p></div></div>
+ <div class="section-heading minor"><h2>旅程一瞥</h2><button class="textbutton" type="button" data-go="journey">查看人生主線 ↗</button></div>
+ <div id="featuredQuest"></div>
+ <div id="reminderNudge" class="warning" hidden>⏳ 已過提醒時間，仲有未完成嘅習慣。試吓先做 2 分鐘。</div>
+</section>
+<section id="calendar" class="page" aria-label="月曆">
+ <div class="page-head"><span class="eyebrow">YOUR HISTORY</span><h1>每一天都有痕跡</h1><p class="muted">睇清每個習慣嘅完成紀錄；缺席一日唔代表前功盡廢。</p></div>
+ <div class="panel"><div class="monthrow"><button class="squarebtn" id="monthBack" type="button" aria-label="上個月">‹</button><h2 id="monthLabel"></h2><button class="squarebtn" id="monthNext" type="button" aria-label="下個月">›</button></div>
+  <div class="calendar-week"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>
+  <div class="calendar-grid" id="masterCalendar"></div><p class="tiny muted" id="monthStat"></p>
+ </div>
+ <div class="section-heading"><div><span class="eyebrow">HABIT ATLAS</span><h2>各習慣月曆</h2></div><button id="toggleGraduatedCalendar" type="button" class="textbutton">顯示已畢業</button></div>
+ <div id="habitCalendars" class="cards"></div>
+ <p class="legend">金色＝完成 · 灰色＝未完成 · 空心＝休息日／未開始。按日子可以補打卡。</p>
+</section>
+<section id="journey" class="page" aria-label="人生旅程">
+ <div class="page-head"><span class="eyebrow">THE LONG PATH</span><h1>你嘅人生冒險</h1><p class="muted">夢想唔再係遙遠嘅清單。每條主線都可以由今日 2 分鐘開始。</p></div>
+ <div class="section-heading"><h2>人生夢想</h2><button id="addDream" class="icon-add" type="button">＋ 新夢想</button></div>
+ <div id="dreamList" class="cards"></div>
+ <div class="section-heading minor"><h2>主線 · 支線任務</h2><button id="addQuest" class="icon-add" type="button">＋ 新任務</button></div>
+ <div id="questList" class="cards"></div>
+ <div class="section-heading minor"><h2>畢業之殿</h2></div>
+ <p class="section-sub">當行動成為生活嘅自然一部分，就唔使再每日提醒自己。</p>
+ <div id="graduationList" class="cards"></div>
+</section>
+<section id="rewards" class="page" aria-label="獎勵">
+ <div class="page-head"><span class="eyebrow">THE TAVERN</span><h1>旅途中的獎賞</h1><p class="muted">先完成自己承諾嘅行動，先領取獎勵。唔係懲罰，而係建立期待。</p></div>
+ <div class="wallet-panel"><span>目前金幣</span><strong id="rewardWallet">🪙 0</strong><small>每完成一項微習慣：+5 金幣、+10 XP</small></div>
+ <div class="section-heading"><h2>可兌換獎勵</h2><button id="addReward" class="icon-add" type="button">＋ 新獎勵</button></div>
+ <div id="rewardList" class="cards"></div>
+ <p class="legend">獎勵由你自律執行，Daymark 唔會真正封鎖其他 iPhone App。</p>
+</section>
+<section id="settings" class="page" aria-label="設定">
+ <div class="page-head"><span class="eyebrow">THE CAMP</span><h1>營地 · 設定</h1><p class="muted">讓工具保持簡單，唔好令追蹤本身變成負擔。</p></div>
+ <div class="panel">
+   <h2>每日提醒</h2><p class="muted tiny">App 開住時可以提示未完成事項。iPhone 關閉 App 後，請用日曆建立固定提醒。</p>
+   <div class="field-inline"><input id="reminderTime" type="time" value="20:00"><button id="saveReminder" class="button" type="button">儲存</button></div>
+   <button id="exportReminder" class="button ghost block" type="button">↓ 下載每日 iPhone 日曆提醒</button>
+ </div>
+ <div class="panel"><h2>資料備份</h2><p class="muted tiny">所有夢想、習慣、金幣同完成紀錄都只儲存喺呢部裝置。轉網址／換手機請先匯出再匯入。</p>
+ <div class="button-row"><button id="backup" class="button ghost" type="button">↓ 匯出備份</button><button id="restore" class="button ghost" type="button">↑ 匯入備份</button><input type="file" id="restoreFile" accept=".json,application/json" hidden></div></div>
+ <div class="panel"><h2>關於習慣形成</h2><p class="muted tiny">21 日係里程碑，唔係科學保證。研究顯示習慣自動化有好大個人差異；「畢業」由你自行決定，而非計時器判斷。</p></div>
+ <div class="panel"><h2>安裝及更新</h2><p class="muted tiny">用 iPhone Safari 打開 GitHub Pages 網址，分享 → 加入主畫面。首次成功載入後可離線使用；之後連上網可取得新版本。</p><p class="tiny" id="appVersion">Daymark 3.0 · The Path</p></div>
+</section>
+</main>
+<nav class="bottomnav" aria-label="主選單">
+ <button type="button" data-tab="today" class="navitem active"><span>⚔</span>今日</button>
+ <button type="button" data-tab="calendar" class="navitem"><span>▦</span>月曆</button>
+ <button type="button" data-tab="journey" class="navitem"><span>✧</span>旅程</button>
+ <button type="button" data-tab="rewards" class="navitem"><span>♛</span>獎勵</button>
+</nav>
+</div>
+<dialog id="habitDialog" class="modal">
+<form id="habitForm" autocomplete="off"><div class="modal-top"><div><span class="eyebrow">SMALL STEP</span><h2 id="habitDialogTitle">新增微習慣</h2></div><button class="close" type="button" data-close="habitDialog" aria-label="關閉">×</button></div>
+ <label>習慣名稱 *</label><input name="name" id="habitName" required maxlength="65" placeholder="例如：閱讀兩頁書">
+ <div class="two-fields"><div><label>圖示</label><select name="emoji" id="habitEmoji"><option>🌱</option><option>📚</option><option>💪</option><option>🎨</option><option>✍️</option><option>🎹</option><option>💬</option><option>🧘</option><option>🌍</option><option>💧</option><option>🏃</option><option>🎬</option></select></div><div><label>重複日子</label><select id="habitSchedule"><option value="daily">每日</option><option value="weekdays">星期一至五</option><option value="weekends">週末</option></select></div></div>
+ <label>1% 版本：最簡單可以做咩？</label><input id="habitMinimum" maxlength="90" placeholder="例如：睇 2 頁 / 練 2 分鐘"><p class="fieldhint">要細到即使好攰都可以完成。</p>
+ <label>Anchor：喺咩現有習慣之後做？</label><input id="habitAnchor" maxlength="90" placeholder="例如：刷牙後 / 早餐後 / 沖咖啡後"><p class="fieldhint">將新行動接喺你已經會做嘅事後面。</p>
+ <label>連結到邊條任務？</label><select id="habitQuest"><option value="">暫時唔連結</option></select>
+ <div class="modal-actions"><button id="habitGraduate" class="button ghost" type="button" hidden>🎓 畢業</button><button id="habitDelete" class="button danger" type="button" hidden>刪除</button><button class="button primary" type="submit">保存習慣</button></div>
+ </form></dialog>
+<dialog id="dreamDialog" class="modal"><form id="dreamForm" autocomplete="off"><div class="modal-top"><h2 id="dreamDialogTitle">新增人生夢想</h2><button type="button" class="close" data-close="dreamDialog">×</button></div>
+ <label>你想成為點樣嘅人？*</label><input id="dreamName" maxlength="90" required placeholder="例如：能深入欣賞和評論藝術">
+ <label>點解呢件事對你重要？</label><textarea id="dreamWhy" rows="3" maxlength="260" placeholder="記低你真正想追求嘅生活"></textarea>
+ <div class="modal-actions"><button id="dreamDelete" type="button" class="button danger" hidden>刪除夢想</button><button class="button primary" type="submit">保存夢想</button></div></form></dialog>
+<dialog id="questDialog" class="modal"><form id="questForm" autocomplete="off"><div class="modal-top"><h2 id="questDialogTitle">新增主線／支線</h2><button type="button" class="close" data-close="questDialog">×</button></div>
+ <label>任務名稱 *</label><input id="questName" maxlength="90" required placeholder="例如：建立一年電影閱讀計劃">
+ <div class="two-fields"><div><label>任務類型</label><select id="questType"><option value="main">主線任務</option><option value="side">支線任務</option></select></div><div><label>所屬人生夢想</label><select id="questDream"><option value="">暫無</option></select></div></div>
+ <label>完成呢條任務代表咩？</label><input id="questMilestone" maxlength="140" placeholder="例如：累積寫 12 篇影評">
+ <div class="modal-actions"><button id="questDelete" type="button" class="button danger" hidden>刪除</button><button id="questFinish" type="button" class="button ghost" hidden>✓ 標記完成</button><button class="button primary" type="submit">保存任務</button></div></form></dialog>
+<dialog id="rewardDialog" class="modal"><form id="rewardForm" autocomplete="off"><div class="modal-top"><h2 id="rewardDialogTitle">新增獎勵</h2><button type="button" class="close" data-close="rewardDialog">×</button></div>
+ <label>獎勵名稱 *</label><input id="rewardName" required maxlength="80" placeholder="例如：睇一集劇集">
+ <div class="two-fields"><div><label>所需金幣</label><input id="rewardCost" type="number" inputmode="numeric" min="0" max="9999" value="15"></div><div><label>解鎖條件</label><select id="rewardRule"><option value="count">今日完成指定數量</option><option value="all">完成今日全部習慣</option><option value="specific">完成指定習慣</option></select></div></div>
+ <div id="rewardCountWrap"><label>完成幾個習慣？</label><input id="rewardCount" type="number" min="1" max="100" value="2"></div>
+ <div id="rewardHabitWrap" hidden><label>指定習慣</label><select id="rewardHabit"></select></div>
+ <div class="modal-actions"><button id="rewardDelete" type="button" class="button danger" hidden>刪除</button><button type="submit" class="button primary">保存獎勵</button></div></form></dialog>
+<div id="toast" role="status" aria-live="polite"></div>
+<script src="./app.js" defer></script>
+</body>
+</html>
