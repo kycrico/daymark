@@ -71,11 +71,91 @@ function toggle(h,day=today()){
  save();render();
  if(!was)toast("⚔ 任務完成 · +10 XP · +5 金幣");
 }
+function sortHandle(label){
+ const b=e("button","drag-handle","⠿");b.type="button";
+ b.setAttribute("aria-label","拖動排序："+label);
+ b.title="按住並上下拖動。亦可用鍵盤上下方向鍵排序";
+ b.addEventListener("click",()=>toast("按住 ⠿ 上下拖動，就可以調整次序"));
+ return b;
+}
+function persistSort(root,kind){
+ const ids=Array.from(root.children).map(n=>n.dataset.sortId).filter(Boolean);
+ if(!ids.length)return;
+ const original=db[kind],byId=new Map(original.map(o=>[o.id,o])),chosen=new Set(ids);
+ let index=0;
+ db[kind]=original.map(o=>chosen.has(o.id)?byId.get(ids[index++]):o);
+ save();render();toast("✓ 排序已自動儲存");
+}
+function enableSortable(rootId,kind){
+ const root=$(rootId);
+ root.addEventListener("keydown",ev=>{
+   if(ev.key!=="ArrowUp"&&ev.key!=="ArrowDown")return;
+   const handle=ev.target.closest(".drag-handle");
+   if(!handle||!root.contains(handle))return;
+   const card=handle.closest("[data-sort-id]"),cards=Array.from(root.children).filter(n=>n.dataset.sortId);
+   const index=cards.indexOf(card),targetIndex=index+(ev.key==="ArrowUp"?-1:1);
+   if(index<0||targetIndex<0||targetIndex>=cards.length)return;
+   ev.preventDefault();
+   const target=cards[targetIndex];
+   root.insertBefore(card,ev.key==="ArrowUp"?target:target.nextSibling);
+   const currentId=card.dataset.sortId;
+   persistSort(root,kind);
+   const next=Array.from(root.children).find(n=>n.dataset.sortId===currentId);
+   next?.querySelector(".drag-handle")?.focus();
+ });
+ root.addEventListener("pointerdown",down=>{
+   const handle=down.target.closest(".drag-handle");
+   if(!handle||!root.contains(handle)||down.button!==0)return;
+   const card=handle.closest("[data-sort-id]");
+   if(!card||card.parentElement!==root)return;
+   down.preventDefault();
+   const pointerId=down.pointerId,startX=down.clientX,startY=down.clientY,rect=card.getBoundingClientRect();
+   const offsetX=startX-rect.left,offsetY=startY-rect.top;
+   let started=false,ghost=null;
+   const move=ev=>{
+     if(ev.pointerId!==pointerId)return;
+     if(!started&&Math.hypot(ev.clientX-startX,ev.clientY-startY)<6)return;
+     ev.preventDefault();
+     if(!started){
+       started=true;ghost=card.cloneNode(true);
+       ghost.removeAttribute("data-sort-id");ghost.classList.add("sort-ghost");
+       ghost.style.width=rect.width+"px";ghost.style.height=rect.height+"px";
+       document.body.appendChild(ghost);card.classList.add("sorting-source");
+     }
+     ghost.style.left=(ev.clientX-offsetX)+"px";
+     ghost.style.top=(ev.clientY-offsetY)+"px";
+     const node=document.elementFromPoint(ev.clientX,ev.clientY);
+     const target=node?.closest("[data-sort-id]");
+     if(target&&target!==card&&target.parentElement===root){
+       const r=target.getBoundingClientRect();
+       root.insertBefore(card,ev.clientY<r.top+r.height/2?target:target.nextSibling);
+     }
+     if(ev.clientY>window.innerHeight-85)window.scrollBy(0,13);
+     else if(ev.clientY<85)window.scrollBy(0,-13);
+   };
+   const finish=ev=>{
+     if(ev.pointerId!==pointerId)return;
+     window.removeEventListener("pointermove",move);
+     window.removeEventListener("pointerup",finish);
+     window.removeEventListener("pointercancel",cancel);
+     if(started){ghost?.remove();card.classList.remove("sorting-source");persistSort(root,kind);}
+   };
+   const cancel=ev=>{if(ev.pointerId!==pointerId)return;
+     window.removeEventListener("pointermove",move);
+     window.removeEventListener("pointerup",finish);
+     window.removeEventListener("pointercancel",cancel);
+     if(started){ghost?.remove();card.classList.remove("sorting-source");render();}
+   };
+   window.addEventListener("pointermove",move,{passive:false});
+   window.addEventListener("pointerup",finish);
+   window.addEventListener("pointercancel",cancel);
+ });
+}
 function renderToday(){
  renderTop();const target=$("todayHabits");target.replaceChildren();const list=todays();
  if(!list.length)elemEmpty(target,"✦","每段旅程都由第一步開始","新增第一個細小行動，例如每天閱讀 2 頁。","建立第一個微習慣",()=>openHabit());
  for(const h of list){
- const is=done(h,today()),card=e("div","habit-card"+(is?" complete":""));
+ const is=done(h,today()),card=e("div","habit-card"+(is?" complete":""));card.dataset.sortId=h.id;
  const tick=button(is?"✓":" ","checkbtn"+(is?" done":""),()=>toggle(h));
  tick.setAttribute("aria-label",(is?"取消完成 ":"完成 ")+h.name);
  const body=e("div","habit-main");add(body,e("span","habit-title",h.name));
@@ -84,7 +164,7 @@ function renderToday(){
  const tag=db.quests.find(q=>q.id===h.questId);
  if(tag)add(body,e("div","habit-tag","↳ "+(tag.type==="main"?"主線":"支線")+" · "+tag.name));
  add(body,e("div","habit-extra",e("span","milestone",milestone(h)),e("span","",is?"今日已完成":"未打卡")));
- add(card,tick,e("span","habit-emoji",h.emoji),body,button("⋯","small-icon",()=>openHabit(h)));add(target,card);
+ add(card,tick,e("span","habit-emoji",h.emoji),body,button("⋯","small-icon",()=>openHabit(h)),sortHandle(h.name));add(target,card);
  }
  const tips=["將新行動接喺每日一定會做嘅事之後。","定一個細到唔需要意志力嘅最低版本。","漏咗一日唔緊要，下次提示出現時再做。","獎勵自己有開始，而唔係只獎勵完美。","慢慢加難度。先求重複，再求質量。"];
  $("dailyTip").textContent=tips[(date(today()).getDate()-1)%tips.length];
@@ -122,7 +202,7 @@ function dreamCard(d){const quests=db.quests.filter(q=>q.dreamId===d.id),doneQ=q
  const card=e("article","dream-card"),top=e("div","dream-top"),body=e("div");
  add(body,e("span","eyebrow","✧ LIFE DREAM"),e("h3","",d.name));
  if(d.why)add(body,e("p","",d.why));
- add(top,body,button("⋯","small-icon",()=>openDream(d)));
+ add(top,body,button("⋯","small-icon",()=>openDream(d)),sortHandle(d.name));
  const foot=e("div","dream-progress");
  const bar=e("div","habit-track"),inner=e("div");inner.style.width=(quests.length?Math.round(doneQ/quests.length*100):0)+"%";
  add(bar,inner);add(foot,e("span","",doneQ+"/"+quests.length+" 任務 · "+dreamActions+" 次行動"),bar);
@@ -132,7 +212,7 @@ function questCard(q,compact=false){
  const s=progressForQuest(q),dream=db.dreams.find(d=>d.id===q.dreamId),card=e("article","quest-card "+q.type+(q.finished?" finished":"")),top=e("div","quest-top"),body=e("div");
  add(body,e("span","quest-type",q.type==="main"?"⚔ MAIN QUEST · 主線":"✧ SIDE QUEST · 支線"),e("h3","",q.name));
  if(q.milestone)add(body,e("p","",q.milestone));
- add(top,body,button("⋯","small-icon",()=>openQuest(q)));
+ add(top,body,button("⋯","small-icon",()=>openQuest(q)),...(compact?[]:[sortHandle(q.name)]));
  add(card,top);
  const sub=e("div","quest-foot");
  add(sub,e("span","",dream?"↳ "+dream.name:"獨立任務"),e("span","",q.finished?"✓ 完成於 "+q.finished:s.n+" 個微習慣 · "+s.checks+" 次行動"));add(card,sub);
@@ -141,10 +221,10 @@ function questCard(q,compact=false){
 function renderJourney(){
  const dreams=$("dreamList");dreams.replaceChildren();
  if(!db.dreams.length)elemEmpty(dreams,"✧","人生夢想，由你定義","例如旅居世界、創作藝術、提升舞蹈或音樂。","＋ 新增人生夢想",()=>openDream());
- db.dreams.forEach(d=>add(dreams,dreamCard(d)));
+ db.dreams.forEach(d=>{const c=dreamCard(d);c.dataset.sortId=d.id;add(dreams,c);});
  const quests=$("questList");quests.replaceChildren();
  if(!db.quests.length)elemEmpty(quests,"⚔","未有主線任務","將一個遙遠夢想拆成有方向嘅長期任務。","＋ 設定主線",()=>openQuest());
- [...db.quests].sort((a,b)=>Number(!!a.finished)-Number(!!b.finished)).forEach(q=>add(quests,questCard(q)));
+ db.quests.forEach(q=>{const c=questCard(q);c.dataset.sortId=q.id;add(quests,c);});
  const grads=$("graduationList");grads.replaceChildren();const completed=db.habits.filter(h=>h.graduated);
  if(!completed.length)elemEmpty(grads,"🎓","畢業之殿尚待填滿","當習慣已經自然融入生活，可以畢業，騰出位置畀下一個挑戰。");
  completed.forEach(h=>{const c=e("div","graduated-card");add(c,e("span","",h.emoji+" "+h.name+" · "+completions(h)+" 次"),button("重新啟用","mini-action",()=>{if(!confirm("將此習慣恢復到每日清單？"))return;h.graduated=null;save();render();}));add(grads,c);});
@@ -205,6 +285,9 @@ $("rewardDelete").addEventListener("click",()=>{if(!confirm("刪除呢個獎勵�
 $("rewardRule").addEventListener("change",rewardFields);
 document.querySelectorAll("[data-close]").forEach(b=>b.addEventListener("click",()=>closeModal(b.dataset.close)));
 document.querySelectorAll("dialog").forEach(d=>d.addEventListener("click",ev=>{if(ev.target===d)closeModal(d.id);}));
+enableSortable("todayHabits","habits");
+enableSortable("dreamList","dreams");
+enableSortable("questList","quests");
 document.querySelectorAll("[data-tab]").forEach(b=>b.addEventListener("click",()=>go(b.dataset.tab)));
 document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>go(b.dataset.go)));
 $("settingsShortcut").addEventListener("click",()=>go("settings"));$("addHabit").addEventListener("click",()=>openHabit());$("addDream").addEventListener("click",()=>openDream());$("addQuest").addEventListener("click",()=>openQuest());$("addReward").addEventListener("click",()=>openReward());
